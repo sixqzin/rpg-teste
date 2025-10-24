@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Chrono RPG • Dashboard v3.0</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="bgCanvas"></canvas>
+
+  <!-- Toast Container -->
+  <div id="toastContainer"></div>
+
+  <!-- Notifications Panel -->
+  <div id="notificationsPanel" class="notifications-panel">
+    <div class="notifications-header">
+      <h4>🔔 Notificações</h4>
+      <button class="btn-close-notifications" onclick="closeNotifications()">✕</button>
+    </div>
+    <div id="notificationsList" class="notifications-list"></div>
+  </div>
+
+  <!-- Login Screen -->
+  <div id="loginScreen" class="screen active">
+    <div class="card auth-card">
+      <h1>🎲 Chrono RPG</h1>
+      <p class="subtitle">Entre no mundo das campanhas épicas</p>
+      <input id="loginUser" placeholder="Usuário" autocomplete="username">
+      <input id="loginPass" type="password" placeholder="Senha" autocomplete="current-password">
+      <div class="row" style="justify-content:center;">
+        <button id="btnLogin" class="btn primary">Entrar</button>
+      </div>
+      <p class="muted mt-2">Não tem conta? <a id="goRegister" href="#">Criar agora</a></p>
+    </div>
+  </div>
+
+  <!-- Register Screen -->
+  <div id="registerScreen" class="screen">
+    <div class="card auth-card">
+      <h1>✨ Criar Conta</h1>
+      <p class="subtitle">Junte-se à comunidade RPG</p>
+      <input id="regUser" placeholder="Escolha um usuário" autocomplete="username">
+      <input id="regPass" type="password" placeholder="Crie uma senha" autocomplete="new-password">
+      <label class="muted small">Avatar (opcional)</label>
+      <input id="regAvatar" type="file" accept="image/*">
+      <div class="row">
+        <button id="btnRegister" class="btn primary">Registrar</button>
+        <button id="goLogin" class="btn ghost">Voltar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard" class="screen">
+    <aside class="sidebar card">
+      <div class="brand">
+        <h2>🎲 Chrono RPG</h2>
+        <small class="muted">Painel de Controle v3.0</small>
+      </div>
+
+      <div class="profile">
+        <img id="userAvatar" class="avatar" src="" alt="avatar">
+        <div class="profile-info">
+          <div id="welcomeUser" class="name">—</div>
+          <div id="roleBadge" class="badge">—</div>
+          <div id="masterTier" class="tier-badge" style="display:none;"></div>
+          <div id="achievementsBadges" class="achievements-badges"></div>
+        </div>
+        <button id="btnUploadAvatar" class="btn ghost small" style="margin-top:8px;">📸 Alterar Avatar</button>
+        <input id="fileAvatar" type="file" accept="image/*" style="display:none">
+      </div>
+
+      <nav class="nav">
+        <button id="navPlayer" class="nav-btn active">🏹 Player</button>
+        <button id="navMaster" class="nav-btn">🧙 Mestre</button>
+        <button id="navAdmin" class="nav-btn">👑 Admin</button>
+        <button id="navMasterRequest" class="nav-btn" style="display:none;">⚔️ Tornar-se Mestre</button>
+        <button id="navDice" class="nav-btn">🎲 Dados</button>
+        <button id="navChat" class="nav-btn">💬 Chat</button>
+        <button id="navRanking" class="nav-btn">🏆 Ranking</button>
+        <button id="btnNotifications" class="nav-btn" style="position:relative;">
+          🔔 Notificações
+          <span id="notificationBadge" class="notification-badge" style="display:none;"></span>
+        </button>
+      </nav>
+
+      <div class="sep"></div>
+
+      <button id="btnLogout" class="btn ghost">🚪 Sair</button>
+
+      <footer class="muted small text-center" style="margin-top:auto;">
+        Salvo Persistente • v3.0 Enhanced
+      </footer>
+    </aside>
+
+    <main class="main">
+      <!-- Player View -->
+      <section id="playerView" class="view active">
+        <div class="row space-between mb-2">
+          <div>
+            <h2>🎮 Campanhas Ativas</h2>
+            <p class="muted">Explore e participe de campanhas épicas</p>
+          </div>
+          <div class="muted small">
+            📌 Participando: <strong id="playerCampaignCount">0/2</strong>
+          </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="card mb-2" style="padding:16px;">
+          <div class="row" style="gap:12px;flex-wrap:wrap;">
+            <input id="searchCampaigns" placeholder="🔍 Buscar campanhas..." style="flex:1;min-width:200px;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.3);color:#fff;">
+            <select id="filterCategory" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.3);color:#fff;">
+              <option value="">Todas Categorias</option>
+            </select>
+            <select id="filterSystem" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.3);color:#fff;">
+              <option value="">Todos Sistemas</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="activeList" class="cards-grid"></div>
+
+        <h3>📋 Minhas Campanhas</h3>
+        <div id="myEnrollments" class="cards-grid"></div>
+
+        <h3>📅 Confirmação de Presença</h3>
+        <p class="muted">Confirme sua presença ou ausência nas próximas sessões</p>
+        <div id="attendanceList" class="cards-grid"></div>
+      </section>
+
+      <!-- Master View -->
+      <section id="masterView" class="view">
+        <div class="row space-between mb-2">
+          <div>
+            <h2>🧙 Painel do Mestre</h2>
+            <p class="muted">Gerencie suas campanhas</p>
+          </div>
+          <div>
+            <div class="muted small">📌 Limite: <strong id="masterCampaignCount">0/2</strong></div>
+            <div id="masterTierInfo" class="muted small"></div>
+          </div>
+        </div>
+
+        <!-- Grade de Horários da Sala -->
+        <div class="card mb-2">
+          <h3>📅 Horários da Sala</h3>
+          <p class="muted small mb-2">Horários já ocupados por outras campanhas</p>
+          <div id="roomScheduleGrid" class="time-grid"></div>
+        </div>
+
+        <div class="row" style="align-items:flex-start;gap:20px;">
+          <div class="card" style="flex:1;max-width:800px;">
+            <h3>✨ Criar Nova Campanha</h3>
+            <form id="formCreate" class="form">
+              <input id="campName" placeholder="Nome da campanha" required>
+              <input id="campSystem" placeholder="Sistema (ex: D&D 5e, Pathfinder)">
+              <textarea id="campDesc" placeholder="Descrição da campanha"></textarea>
+
+              <label>👥 Limite de Jogadores</label>
+              <input type="number" id="campMaxPlayers" min="1" max="10" value="4" placeholder="Máximo de jogadores">
+
+              <label>🏷️ Categorias (máx 3)</label>
+              <div class="predef">
+                <label><input type="checkbox" value="Medieval" class="catChk"> Medieval</label>
+                <label><input type="checkbox" value="Terror" class="catChk"> Terror</label>
+                <label><input type="checkbox" value="Mistério" class="catChk"> Mistério</label>
+                <label><input type="checkbox" value="Fantasia" class="catChk"> Fantasia</label>
+                <label><input type="checkbox" value="Sci-Fi" class="catChk"> Sci-Fi</label>
+              </div>
+              <input id="catFree" placeholder="Categoria personalizada (Enter para adicionar)">
+              <div id="catChips" class="chips-row"></div>
+
+              <label>⏰ Horários (máx 2)</label>
+              <div id="timeGrid" class="time-grid"></div>
+
+              <div class="row mt-2">
+                <button id="btnCreate" type="button" class="btn primary">
+                  <span class="btn-text">Criar Campanha</span>
+                  <span class="btn-loader" style="display:none;">⏳</span>
+                </button>
+                <button id="btnClear" type="button" class="btn ghost">Limpar</button>
+              </div>
+            </form>
+          </div>
+
+          <div style="flex:1;min-width:320px;">
+            <h3>📚 Minhas Campanhas</h3>
+            <div id="masterList" class="cards-grid"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Admin View -->
+      <section id="adminView" class="view">
+        <div class="row space-between mb-2">
+          <div>
+            <h2>👑 Painel Admin</h2>
+            <p class="muted">Gerencie aprovações e usuários</p>
+          </div>
+        </div>
+
+        <!-- Dashboard Stats -->
+        <div class="stats-grid">
+          <div class="stat-card card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-value" id="statUsers">0</div>
+            <div class="stat-label">Usuários</div>
+          </div>
+          <div class="stat-card card">
+            <div class="stat-icon">🎲</div>
+            <div class="stat-value" id="statCampaigns">0</div>
+            <div class="stat-label">Campanhas</div>
+          </div>
+          <div class="stat-card card">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-value" id="statPending">0</div>
+            <div class="stat-label">Pendentes</div>
+          </div>
+          <div class="stat-card card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-value" id="statActive">0</div>
+            <div class="stat-label">Ativas</div>
+          </div>
+        </div>
+
+        <!-- Grade de Horários da Sala -->
+        <div class="card mb-2">
+          <h3>📅 Grade de Horários da Sala</h3>
+          <p class="muted small mb-2">Visualize e gerencie os horários ocupados</p>
+          <div id="adminRoomSchedule"></div>
+        </div>
+
+        <h3>⏳ Aprovações Pendentes</h3>
+        <div id="pendingList" class="cards-grid"></div>
+
+        <h3>🎓 Requisições para Mestre</h3>
+        <div id="masterRequestsList" class="cards-grid"></div>
+
+        <h3>🧙 Gerenciar Mestres</h3>
+        <div id="mastersManagement" class="cards-grid"></div>
+
+        <h3>👥 Usuários</h3>
+        <div class="card mb-2" style="padding:16px;">
+          <input id="searchUsers" placeholder="🔍 Buscar usuários..." style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.3);color:#fff;">
+        </div>
+        <div id="usersList" class="cards-grid"></div>
+
+        <h3>📊 Jogadores por Campanha</h3>
+        <div id="campaignPlayersList" class="cards-grid"></div>
+      </section>
+
+      <!-- Master Request View -->
+      <section id="masterRequestView" class="view">
+        <div class="card" style="max-width:800px;margin:0 auto;">
+          <h2>⚔️ Tornar-se Mestre</h2>
+          <p class="muted mb-2">Complete os requisitos abaixo para se tornar um Mestre de RPG</p>
+
+          <div id="requestStatus"></div>
+
+          <div class="requirement-card card">
+            <h3>📋 Requisitos</h3>
+            <div class="requirement-item">
+              <span class="req-icon" id="reqIcon1">⏳</span>
+              <span>Participar de pelo menos 3 sessões</span>
+              <span class="req-count" id="reqCount1">0/3</span>
+            </div>
+          </div>
+
+          <div class="exam-section">
+            <h3>📝 Prova Teórica</h3>
+            
+            <div class="card mb-2">
+              <h4>Conhecimento de RPG</h4>
+              <p class="muted small mb-2">Responda corretamente 7 de 10 perguntas</p>
+              <div id="examQuestions"></div>
+              <button id="btnSubmitExam" class="btn primary mt-2">Enviar Prova</button>
+            </div>
+          </div>
+
+          <div id="examResults" style="margin-top:20px;"></div>
+          
+          <div id="requestSubmitSection" style="display:none;">
+            <button id="btnSubmitMasterRequest" class="btn success" style="width:100%;margin-top:20px;">
+              📤 Enviar Requisição para Entrevista
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Chat View -->
+      <section id="chatView" class="view">
+        <div style="max-width:1200px;margin:0 auto;">
+          <h2>💬 Chat das Campanhas</h2>
+          <p class="muted mb-2">Converse com seu mestre e grupo</p>
+
+          <div class="card">
+            <div style="margin:16px 0;">
+              <label class="muted small">Selecionar Campanha</label>
+              <select id="chatCampaignSelect" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.3);color:#fff;">
+                <option value="">Escolha uma campanha...</option>
+              </select>
+            </div>
+
+            <div id="chatMessages" class="chat-messages"></div>
+
+            <div class="row" style="margin-top:16px;">
+              <input type="text" id="chatInput" placeholder="Digite sua mensagem..." style="flex:1;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.3);color:#fff;">
+              <button id="btnSendMessage" class="btn primary">📤 Enviar</button>
+            </div>
+          </div>
+
+          <div id="noCampaignsChat" class="empty-state" style="display:none;">
+            📭 Você precisa estar inscrito em uma campanha para usar o chat
+          </div>
+        </div>
+      </section>
+
+      <!-- Ranking View -->
+      <section id="rankingView" class="view">
+        <div style="max-width:1200px;margin:0 auto;">
+          <h2>🏆 Ranking de Jogadores</h2>
+          <p class="muted mb-2">Os jogadores mais dedicados da comunidade</p>
+
+          <div class="stats-grid">
+            <div class="stat-card card">
+              <div class="stat-icon">🎯</div>
+              <div class="stat-value" id="rankingTotalPlayers">0</div>
+              <div class="stat-label">Jogadores Ativos</div>
+            </div>
+            <div class="stat-card card">
+              <div class="stat-icon">📅</div>
+              <div class="stat-value" id="rankingTotalSessions">0</div>
+              <div class="stat-label">Sessões Realizadas</div>
+            </div>
+            <div class="stat-card card">
+              <div class="stat-icon">⭐</div>
+              <div class="stat-value" id="rankingAvgPresence">0%</div>
+              <div class="stat-label">Presença Média</div>
+            </div>
+          </div>
+
+          <div class="row" style="gap:20px;align-items:flex-start;flex-wrap:wrap;margin-top:24px;">
+            <div class="card" style="flex:1;min-width:320px;">
+              <h3>🥇 Top Jogadores</h3>
+              <p class="muted small mb-2">Ranking por sessões participadas</p>
+              <div id="topPlayersList"></div>
+            </div>
+
+            <div class="card" style="flex:1;min-width:320px;">
+              <h3>🎖️ Suas Conquistas</h3>
+              <p class="muted small mb-2">Badges desbloqueados</p>
+              <div id="myAchievements"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Dice Roller View -->
+      <section id="diceView" class="view">
+        <div style="max-width:1200px;margin:0 auto;">
+          <h2>🎲 Sistema de Rolagem de Dados</h2>
+          <p class="muted mb-2">Role dados com modificadores, salve macros e veja o histórico</p>
+
+          <div class="row" style="align-items:flex-start;gap:20px;flex-wrap:wrap;">
+            <!-- Dice Roller -->
+            <div class="card" style="flex:1;min-width:320px;">
+              <h3>🎯 Rolar Dados</h3>
+              
+              <div class="dice-selector">
+                <button class="dice-btn" data-dice="d4">D4</button>
+                <button class="dice-btn" data-dice="d6">D6</button>
+                <button class="dice-btn" data-dice="d8">D8</button>
+                <button class="dice-btn" data-dice="d10">D10</button>
+                <button class="dice-btn" data-dice="d12">D12</button>
+                <button class="dice-btn active" data-dice="d20">D20</button>
+                <button class="dice-btn" data-dice="d100">D100</button>
+              </div>
+
+              <div style="margin:16px 0;">
+                <label class="muted small">Quantidade de Dados</label>
+                <input type="number" id="diceCount" min="1" max="20" value="1" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.3);color:#fff;">
+              </div>
+
+              <div style="margin:16px 0;">
+                <label class="muted small">Modificador (+/-)</label>
+                <input type="number" id="diceModifier" value="0" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.3);color:#fff;">
+              </div>
+
+              <div style="margin:16px 0;">
+                <label class="muted small">Descrição (opcional)</label>
+                <input type="text" id="diceDescription" placeholder="Ex: Ataque com espada" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.3);color:#fff;">
+              </div>
+
+              <div class="row">
+                <button id="btnRollDice" class="btn primary" style="flex:1;">
+                  🎲 Rolar
+                </button>
+                <button id="btnSaveMacro" class="btn ghost">
+                  💾 Salvar Macro
+                </button>
+              </div>
+
+              <div id="diceResult" class="dice-result" style="display:none;"></div>
+            </div>
+
+            <!-- Macros -->
+            <div class="card" style="flex:1;min-width:320px;">
+              <h3>⚡ Macros Salvas</h3>
+              <p class="muted small mb-2">Clique para rolar rapidamente</p>
+              <div id="macrosList"></div>
+            </div>
+          </div>
+
+          <!-- History -->
+          <div class="card mt-2">
+            <div class="row space-between mb-2">
+              <h3 style="margin:0;">📜 Histórico de Rolagens</h3>
+              <button id="btnClearHistory" class="btn ghost small">🗑️ Limpar</button>
+            </div>
+            <div id="diceHistory"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Attendance Modal -->
+  <div id="attendanceModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">📅 Confirmar Presença</h3>
+        <p class="muted" id="modalCampaign"></p>
+        <p class="muted small" id="modalSession"></p>
+      </div>
+      <div class="modal-body">
+        <div class="row" style="gap: 16px; margin-bottom: 20px;">
+          <button id="btnConfirmPresence" class="btn success" style="flex: 1;">
+            ✅ Vou Comparecer
+          </button>
+          <button id="btnConfirmAbsence" class="btn danger" style="flex: 1;">
+            ❌ Não Vou Comparecer
+          </button>
+        </div>
+        <div id="reasonSection" style="display: none;">
+          <label class="muted small" style="display: block; margin-bottom: 8px;">Motivo da ausência:</label>
+          <textarea id="absenceReason" placeholder="Explique brevemente o motivo da sua ausência..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btnCancelModal" class="btn ghost">Cancelar</button>
+        <button id="btnSubmitAttendance" class="btn primary" style="display: none;">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Campaign Modal -->
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>✏️ Editar Campanha</h3>
+      </div>
+      <div class="modal-body">
+        <form id="formEdit" class="form">
+          <input id="editName" placeholder="Nome da campanha" required>
+          <input id="editSystem" placeholder="Sistema">
+          <textarea id="editDesc" placeholder="Descrição"></textarea>
+          <button type="button" id="btnFinishCampaign" class="btn warning">🏆 Finalizar Campanha</button>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button id="btnCancelEdit" class="btn ghost">Cancelar</button>
+        <button id="btnSaveEdit" class="btn primary">
+          <span class="btn-text">Salvar</span>
+          <span class="btn-loader" style="display:none;">⏳</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Character Sheet Modal -->
+  <div id="sheetModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>📋 Ficha de Personagem</h3>
+        <p class="muted" id="sheetCampaignName"></p>
+      </div>
+      <div class="modal-body">
+        <div id="sheetUploadSection">
+          <label class="muted small">Envie a foto da sua ficha:</label>
+          <input type="file" id="sheetFile" accept="image/*" style="width:100%;margin:10px 0;">
+          <button id="btnUploadSheet" class="btn primary">📤 Enviar Ficha</button>
+        </div>
+        <div id="sheetViewSection" style="display:none;">
+          <img id="sheetImage" style="width:100%;border-radius:10px;margin:10px 0;" alt="Ficha">
+          <div id="sheetStatus"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btnCloseSheet" class="btn ghost">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manage Campaign Modal (Mestre) -->
+  <div id="manageCampaignModal" class="modal">
+    <div class="modal-content" style="max-width:900px;">
+      <div class="modal-header">
+        <h3>📋 Gerenciar Campanha</h3>
+        <p class="muted" id="manageCampaignName"></p>
+      </div>
+      <div class="modal-body">
+        <h4>👥 Jogadores Inscritos (<span id="manageCampaignPlayerCount">0</span>)</h4>
+        <div id="manageCampaignPlayers"></div>
+        
+        <div style="margin-top:24px;">
+          <button id="btnStartCampaign" class="btn success">🚀 Iniciar Campanha</button>
+          <p class="muted small mt-2">Só é possível iniciar quando todas as fichas estiverem aprovadas</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btnCloseManage" class="btn ghost">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Sheet Modal (Mestre) -->
+  <div id="viewSheetModal" class="modal">
+    <div class="modal-content" style="max-width:800px;">
+      <div class="modal-header">
+        <h3>📋 Ficha do Jogador</h3>
+        <p class="muted" id="viewSheetPlayerName"></p>
+      </div>
+      <div class="modal-body">
+        <img id="viewSheetImage" style="width:100%;border-radius:10px;" alt="Ficha">
+      </div>
+      <div class="modal-footer">
+        <button id="btnRejectSheet" class="btn danger">❌ Rejeitar</button>
+        <button id="btnApproveSheet" class="btn success">✅ Aprovar</button>
+        <button id="btnCloseViewSheet" class="btn ghost">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <template id="cardTemplate">
+    <div class="card campaign-card">
+      <div class="card-header">
+        <div class="title"></div>
+        <div class="meta"></div>
+      </div>
+      <div class="card-body">
+        <p class="desc"></p>
+        <div class="chips-row"></div>
+      </div>
+      <div class="card-footer">
+        <div class="left muted small"></div>
+        <div class="actions"></div>
+      </div>
+    </div>
+  </template>
+
+  <script src="script.js"></script>
+</body>
+</html>
